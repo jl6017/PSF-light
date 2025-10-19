@@ -1,0 +1,33 @@
+## Datasets
+datasets/
+
+## Python caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+
+## Virtual environments
+.venv/
+venv/
+
+## IDE settings
+.vscode/
+.idea/
+
+## Build artifacts
+# build/
+dist/
+
+## Logs and outputs
+output/
+*.log
+
+## Model/checkpoint files
+*.ckpt
+*.pth
+*.pt
+
+## OS files
+.DS_Store
+Thumbs.db

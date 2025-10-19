@@ -3,6 +3,13 @@ import functools
 import torch.nn as nn
 import torch
 import numpy as np
+import os
+import sys
+
+_ROOT = os.path.dirname(os.path.dirname(__file__))
+if _ROOT not in sys.path:
+    sys.path.append(_ROOT)
+from modules.functional import backend  # this compiles & caches _pvcnn_backend
 from modules import SharedMLP, PVConv, PointNetSAModule, PointNetAModule, PointNetFPModule, Attention, Swish
 
 
@@ -245,3 +252,38 @@ class PVCNN2Base(nn.Module):
         return self.classifier(features)
 
 
+if __name__ == '__main__':
+    # quick CUDA-backed sanity check for the PVCNN2 stack
+    if not torch.cuda.is_available():
+        raise SystemExit('CUDA is required to run the PVCNN demo check')
+
+    class PVCNN2(PVCNN2Base):
+        sa_blocks = [
+            ((32, 2, 32), (1024, 0.1, 32, (32, 64))),
+            ((64, 3, 16), (256, 0.2, 32, (64, 128))),
+            ((128, 3, 8), (64, 0.4, 32, (128, 256))),
+            (None, (16, 0.8, 32, (256, 256, 512))),
+        ]
+        fp_blocks = [
+            ((256, 256), (256, 3, 8)),
+            ((256, 256), (256, 3, 8)),
+            ((256, 128), (128, 2, 16)),
+            ((128, 128, 64), (64, 2, 32)),
+        ]
+
+    device = torch.device('cuda')
+    batch_size, num_points, extra_channels = 2, 2048, 0
+    model = PVCNN2(num_classes=3, embed_dim=128, use_att=True, dropout=0.1,
+                   extra_feature_channels=extra_channels).to(device)
+    model.train()  # keep training mode so custom CUDA ops retain saved tensors for backward
+
+    torch.manual_seed(0)
+    inputs = torch.randn(batch_size, 3 + extra_channels, num_points, device=device)
+    timesteps = torch.randint(0, 1000, (batch_size,), device=device)
+
+    outputs = model(inputs, timesteps)
+    loss = outputs.sum()
+    loss.backward()
+
+    print('PVCNN2 output shape:', tuple(outputs.shape))
+    print('Backward pass succeeded; CUDA extensions are active.')
