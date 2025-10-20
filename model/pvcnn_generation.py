@@ -272,7 +272,7 @@ if __name__ == '__main__':
         ]
 
     device = torch.device('cuda')
-    batch_size, num_points, extra_channels = 2, 2048, 0
+    batch_size, num_points, extra_channels = 2, 2048, 128
     model = PVCNN2(num_classes=3, embed_dim=128, use_att=True, dropout=0.1,
                    extra_feature_channels=extra_channels).to(device)
     model.train()  # keep training mode so custom CUDA ops retain saved tensors for backward

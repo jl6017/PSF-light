@@ -1,5 +1,6 @@
 ## Datasets
-datasets/
+dataset/
+data/
 
 ## Python caches
 __pycache__/
